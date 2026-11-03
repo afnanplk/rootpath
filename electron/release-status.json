@@ -1,0 +1,49 @@
+{
+  "version": "1.3.0-alpha.2",
+  "productionReady": false,
+  "checks": [
+    {
+      "name": "Website simplicity upgrade",
+      "state": "MCP inspection and reviewed code/PR/deployment/restart/static recovery/new-site proposals implemented. Private bridge and Mac desktop tests are separate from live client and VPS acceptance."
+    },
+    {
+      "name": "AI client compatibility",
+      "state": "Local stdio protocol tested. Codex, Claude Desktop and Antigravity configuration supplied; actual client execution pending."
+    },
+    {
+      "name": "Release application",
+      "state": "Live connections only; sample workspace and lab launchers removed"
+    },
+    {
+      "name": "macOS client",
+      "state": "macOS source desktop regressions passed; packaged smoke checked in release report"
+    },
+    {
+      "name": "Windows installer",
+      "state": "build only; Windows execution required"
+    },
+    {
+      "name": "Ubuntu 24.04 with real systemd/sudo",
+      "state": "external acceptance pending"
+    },
+    {
+      "name": "Public DNS and certificate issuance",
+      "state": "external acceptance pending"
+    },
+    {
+      "name": "Production project acceptance",
+      "state": "pending designated disposable VPS project"
+    },
+    {
+      "name": "Signing and notarization",
+      "state": "unsigned test release"
+    }
+  ],
+  "instructions": [
+    "Connect to a disposable Ubuntu 24.04 host as an ordinary account.",
+    "Import reviewed project mappings before enabling writes.",
+    "Test creation, failure paths, reconnect recovery, configuration restoration and timers on disposable resources.",
+    "Verify a database backup by restoring into a new separate target.",
+    "Do not enable production deployments until real server and both client platform checks pass."
+  ]
+}

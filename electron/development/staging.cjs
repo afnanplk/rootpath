@@ -1,0 +1,15 @@
+const{pipeline}=require('node:stream/promises');const{call}=require('../files.cjs');const{fail}=require('../connection-store.cjs');
+// Persistent ledger covers reviewed-but-unsubmitted files across app restarts.
+// Uncertain submissions are retained until their existing job identity is recovered.
+class Staging{
+ constructor(workspaces,projects){Object.assign(this,{workspaces,projects});this.timer=setInterval(()=>void this.cleanup(),60000);this.running=false;}
+ rows(){return this.workspaces.store.data.stagedBundles||=[];}
+ async stage(sessionId,a){const r=this.projects.record({sessionId}),sftp=await this.projects.files.channel(sessionId),home=await call(sftp,'realpath','.');if(typeof home!=='string'||!home.startsWith('/')||/[\x00-\x1f]/.test(home))fail('REMOTE_HOME_UNAVAILABLE','The account home could not be verified.');const remote=home.replace(/\/$/,'')+'/.rootpath-bundle-'+a.id,row={id:a.id,path:remote,serverId:r.session.profile.id,fingerprint:r.session.fingerprint,state:'staging',expiresAt:Date.now()+1800000};this.rows().push(row);await this.workspaces.store.persist();try{await pipeline(require('node:fs').createReadStream(a.file),sftp.createWriteStream(remote,{flags:'wx',mode:0o600}));row.state='staged';await this.workspaces.store.persist();return{path:remote,sha256:a.sha256,size:a.size,ref:a.ref,commit:a.commit};}catch(e){row.state='staged';row.expiresAt=0;await this.workspaces.store.persist();await this.cleanup();throw e;}}
+ async attach(path,token,jobId,expiresAt){const row=this.rows().find(x=>x.path===path);if(row){Object.assign(row,{token,jobId,expiresAt});await this.workspaces.store.persist();}}
+ async submitting(token){const row=this.rows().find(x=>x.token===token);if(row){row.state='submitting';await this.workspaces.store.persist();}}
+ async outcome(token,error){const row=this.rows().find(x=>x.token===token);if(!row)return;if(!error)this.workspaces.store.data.stagedBundles=this.rows().filter(x=>x!==row);else row.state=['SUDO_PASSWORD_REQUIRED','SUDO_DENIED','CONFIRMATION_REQUIRED','REVIEW_EXPIRED'].includes(error.code)?'staged':'uncertain';await this.workspaces.store.persist();}
+ async cancel(token){const row=this.rows().find(x=>x.token===token);if(row&&['staged','staging'].includes(row.state)){row.state='staged';row.expiresAt=0;await this.workspaces.store.persist();await this.cleanup();}}
+ async cleanup(){if(this.running)return;this.running=true;try{for(const row of [...this.rows()]){if(!['staged','staging'].includes(row.state)||row.expiresAt>Date.now())continue;const session=this.projects.files.manager.snapshot().sessions.find(s=>s.status==='connected'&&s.profile.id===row.serverId&&s.fingerprint===row.fingerprint);if(!session)continue;try{const channel=await this.projects.files.channel(session.id);try{await call(channel,'unlink',row.path);}catch(e){if(e.code!==2&&e.code!=='ENOENT')throw e;}this.workspaces.store.data.stagedBundles=this.rows().filter(x=>x.id!==row.id);await this.workspaces.store.persist();}catch{}}}finally{this.running=false;}}
+ dispose(){clearInterval(this.timer);}
+}
+module.exports={Staging};

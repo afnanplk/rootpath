@@ -1,0 +1,21 @@
+import type { Result } from './connections';
+export type TransferKind = 'upload' | 'download' | 'copy' | 'move';
+export type TransferGrant = { id: string; paths: string[] };
+export type TransferConflict = { id: string; path: string; sourceKind: string; destinationKind: string; choices: ('replace' | 'skip' | 'keep-both' | 'merge')[] };
+export type TransferJob = { id: string; sessionId: string; server: string; kind: TransferKind; status: 'queued' | 'scanning' | 'running' | 'conflict' | 'completed' | 'failed' | 'cancelled'; sources: string[]; destination: string; bytesDone: number; bytesTotal: number; bytesSkipped: number; filesDone: number; filesTotal: number; skipped: number; current: string; message: string; warnings: string[]; startedAt?: number; endedAt?: number; conflict?: TransferConflict };
+export type TransferRequest = { sessionId: string; kind: TransferKind; sources?: string[]; sourceGrant?: string; destination: string; destinationGrant?: string };
+export type TransfersAPI = {
+  snapshot: () => Promise<Result<TransferJob[]>>;
+  chooseUpload: (kind: 'files' | 'folder') => Promise<Result<TransferGrant | null>>;
+  chooseDestination: () => Promise<Result<TransferGrant | null>>;
+  grantLocal: (request: { rootId: string; paths: string[] }) => Promise<Result<TransferGrant>>;
+  grantLocalDestination: (request: { rootId: string; path: string }) => Promise<Result<TransferGrant>>;
+  dropFiles: (files: File[]) => Promise<Result<TransferGrant>>;
+  enqueue: (request: TransferRequest) => Promise<Result<TransferJob>>;
+  cancel: (id: string) => Promise<Result<void>>;
+  retry: (request: { id: string; sessionId: string }) => Promise<Result<TransferJob>>;
+  resolve: (request: { id: string; conflictId: string; choice: string; applyAll: boolean }) => Promise<Result<void>>;
+  discardSelections: (ids: string[]) => Promise<Result<void>>;
+  clearFinished: () => Promise<Result<void>>;
+  subscribe: (listener: (jobs: TransferJob[]) => void) => () => void;
+};

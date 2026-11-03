@@ -1,0 +1,23 @@
+import type { Result } from './connections';
+export type Capabilities = { os: string; kernel: string; architecture: string; uid: number | null; hostname: string; distribution: string; distributionId: string; family: string; linux: boolean; metrics: boolean; disks: boolean; processes: boolean; services: boolean; journal: boolean; sudo: boolean; managed: boolean; fixture: boolean; detectedAt: string };
+export type Metrics = { cpuPercent: number | null; memory: { total: number; available: number; used: number; percent: number; estimatedAvailable: boolean; swapTotal: number; swapUsed: number }; uptime: number | null; load: (number | null)[]; interfaces: { name: string; rx: number; tx: number; rxPerSecond: number | null; txPerSecond: number | null }[]; disks: { device: string; total: number; used: number; available: number; percent: number; mount: string }[]; sampledAt: string; probeMs: number; warnings: string[] };
+export type ProcessEntry = { pid: number; user: string; cpu: number; memoryPercent: number; rss: number; state: string; name: string };
+export type ServiceEntry = { unit: string; load: string; active: string; sub: string; description: string };
+export type ServiceStatus = Partial<Record<'Id' | 'LoadState' | 'ActiveState' | 'SubState' | 'MainPID' | 'Description' | 'FragmentPath' | 'UnitFileState', string>>;
+export type ServerAction = 'start' | 'stop' | 'restart' | 'reboot' | 'shutdown';
+export type ActionPlan = { token: string; sessionId: string; action: ServerAction; unit: string | null; sudo: boolean; state: ServiceStatus | null; host: string; server: string; username: string; fixture: boolean; expiresAt: number };
+export type Operation = { id: string; sessionId: string; server: string; host: string; action: ServerAction; unit: string | null; sudo: boolean; simulated: boolean; startedAt: string; finishedAt?: string; status: 'running' | 'completed' | 'failed' | 'unknown'; message: string; code?: string };
+type Request = { sessionId: string };
+export type MonitoringAPI = {
+  capabilities: (input: Request) => Promise<Result<Capabilities>>;
+  metrics: (input: Request) => Promise<Result<Metrics>>;
+  processes: (input: Request) => Promise<Result<{ entries: ProcessEntry[]; limit: number; sampledAt: string }>>;
+  services: (input: Request) => Promise<Result<{ entries: ServiceEntry[]; limit: number; sampledAt: string }>>;
+  status: (input: Request & { unit: string }) => Promise<Result<ServiceStatus>>;
+  logs: (input: Request & { unit: string }) => Promise<Result<{ text: string; lines: number; warning: string }>>;
+  prepare: (input: Request & { action: ServerAction; unit?: string; sudo: boolean }) => Promise<Result<ActionPlan>>;
+  cancel: (input: { token: string }) => Promise<Result<void>>;
+  perform: (input: { token: string; confirmationHost?: string }) => Promise<Result<{ message: string }>>;
+  snapshot: () => Promise<Result<Operation[]>>;
+  subscribe: (listener: (history: Operation[]) => void) => () => void;
+};

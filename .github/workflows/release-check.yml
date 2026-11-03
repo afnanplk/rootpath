@@ -1,0 +1,42 @@
+name: Native release checks
+on:
+  workflow_dispatch:
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:desktop
+      - run: npm run test:ssh-desktop
+      - run: npm run test:workflows-desktop
+      - if: runner.os == 'macOS'
+        run: npm run test:backend
+      - if: runner.os == 'macOS'
+        run: npm run package:mac
+      - if: runner.os == 'Windows'
+        run: npm run package:win
+      - if: runner.os == 'macOS'
+        run: npm run test:production-desktop
+        env:
+          VPS_EXECUTABLE: release/mac-arm64/Rootpath.app/Contents/MacOS/Rootpath
+      - if: runner.os == 'Windows'
+        run: npm run test:production-desktop
+        env:
+          VPS_EXECUTABLE: release/win-unpacked/Rootpath.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Rootpath-${{ runner.os }}-unsigned
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe

@@ -1,0 +1,22 @@
+import type { Result } from './connections';
+export type FileEntry = { name: string; path: string; kind: 'folder' | 'file' | 'link' | 'other'; size: number; modified: number; mode: number; uid?: number; gid?: number; linkTarget?: string; linkError?: string };
+export type DirectoryPage = { path: string; home: string; entries: FileEntry[]; nextCursor?: string };
+export type DeletePlan = { token: string; paths: string[]; files: number; folders: number; links: number; expiresAt: number };
+export type DeleteResult = { removed: number; failed: { path: string; message: string }[] };
+export type RemoteRequest = { sessionId: string; path: string };
+export type FilesAPI = {
+  releaseListing: (request: { ownerId: string; cursor: string }) => Promise<Result<void>>;
+  list: (request: RemoteRequest & { cursor?: string }) => Promise<Result<DirectoryPage>>;
+  properties: (request: RemoteRequest) => Promise<Result<FileEntry>>;
+  create: (request: RemoteRequest & { name: string; kind: 'folder' | 'file' }) => Promise<Result<void>>;
+  rename: (request: RemoteRequest & { name: string }) => Promise<Result<void>>;
+  chmod: (request: RemoteRequest & { mode: string }) => Promise<Result<void>>;
+  prepareDelete: (request: { sessionId: string; paths: string[] }) => Promise<Result<DeletePlan>>;
+  delete: (request: { sessionId: string; token: string }) => Promise<Result<DeleteResult>>;
+  cancelDelete: (request: { sessionId: string; token: string }) => Promise<Result<void>>;
+  chooseLocal: () => Promise<Result<{ rootId: string; path: string } | null>>;
+  listLocal: (request: { rootId: string; path: string; cursor?: string }) => Promise<Result<DirectoryPage>>;
+  localProperties: (request: { rootId: string; path: string }) => Promise<Result<FileEntry>>;
+};
+export const modeString = (mode: number) => (mode & 0o777).toString(8).padStart(3, '0');
+export const humanSize = (size: number) => size < 1024 ? `${size} B` : size < 1024 ** 2 ? `${(size / 1024).toFixed(1)} KB` : size < 1024 ** 3 ? `${(size / 1024 ** 2).toFixed(1)} MB` : `${(size / 1024 ** 3).toFixed(1)} GB`;

@@ -1,0 +1,30 @@
+import type { Result } from './connections';
+export type Input = Record<string, unknown>;
+export type Review = { token: string; expiresAt: number; action: string; name: string; text?: string; user?: string; access?: string; fixture?: boolean; sudo?: boolean };
+export type HostingSite = { name: string; enabled: boolean };
+export type HostingState = { name: string; text: string | null; exists: boolean; enabled: boolean; revision: string };
+export type Operation = { id: string; action: string; name: string; sessionId: string; startedAt: string; status: string; message: string };
+export type DatabaseConnection = { id: string; engine: 'postgres' | 'mysql'; username: string; port: number };
+export type DBJob = { id: string; action: string; database: string; status: string; bytes: number; sessionId: string };
+export type HostingAPI = {
+ list: (q: Input) => Promise<Result<{ nginx: boolean; certbot: boolean; fixture: boolean; layout: string | null; sites: HostingSite[] }>>;
+ inspect: (q: Input) => Promise<Result<HostingState>>;
+ certificates: (q: Input) => Promise<Result<{ text: string }>>;
+ validate: (q: Input) => Promise<Result<{ message: string }>>;
+ prepare: (q: Input) => Promise<Result<Review>>;
+ perform: (q: Input) => Promise<Result<{ message: string; backup?: string; name?: string }>>;
+ cancel: (q: Input) => Promise<Result<void>>;
+ snapshot: () => Promise<Result<Operation[]>>;
+};
+export type DatabasesAPI = {
+ connect: (q: Input) => Promise<Result<DatabaseConnection>>;
+ disconnect: (q: Input) => Promise<Result<void>>;
+ list: (q: Input) => Promise<Result<{ databases: { name: string; owner?: string }[]; users: { name: string; host?: string; login?: boolean }[] }>>;
+ prepare: (q: Input) => Promise<Result<Review>>;
+ perform: (q: Input) => Promise<Result<{ message: string }>>;
+ cancel: (q: Input) => Promise<Result<void>>;
+ backup: (q: Input) => Promise<Result<{ message: string } | null>>;
+ chooseBackup: () => Promise<Result<{ fileToken: string; name: string; size: number } | null>>;
+ snapshot: () => Promise<Result<{ history: Operation[]; jobs: DBJob[] }>>;
+ cancelJob: (q: Input) => Promise<Result<void>>;
+};

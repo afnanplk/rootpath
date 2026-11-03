@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a reproducible Rootpath problem.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Please use a disposable project. Do not include passwords, tokens, private keys or unreviewed logs. For vulnerabilities, read SECURITY.md."
+  - type: input
+    id: version
+    attributes:
+      label: Rootpath version
+      placeholder: 1.3.0-alpha.2
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: Client OS and architecture
+      placeholder: macOS on Apple Silicon, or Windows x64
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: Server distribution
+      placeholder: Ubuntu 24.04; leave out private server addresses
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you click, and what happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Reviewed error output
+      description: Optional. Remove secrets and private server information first.

@@ -1,0 +1,11 @@
+import type {Result} from './connections';import type{DeploymentPlan}from'./projects';
+export type SiteSettings={name:string;kind:'static'|'django'|'node'|'react';repository:string;branch:string;domains:string[];port:number;entry:string;output:string;requirements:string;staticDir:string;runtimeBin:string;installMode:'locked'|'install';build:boolean;https:boolean};
+export type HostingVersion={id:string;time:number;file:string;hash:string;currentRevision:string};
+export type MaskedEnvironment={file:string;exists:boolean;revision:string;fields:{key:string;hasValue:boolean}[];backups:{id:string;time:number;keys:number}[];protectedBackups:boolean};
+export type ProjectTimer={name:string;service:string;active:string;enabled:string;next:string;last:string;revision:string;manageable:boolean};
+export type SitePreview={directory:string;dns:{domain:string;addresses:string[];matches:boolean}[];portOccupied:boolean;missing:string[];packageManager:string|null;systemd:boolean;nginx:boolean;configs:{nginx:string;service:string|null;serviceName:string|null;siteName:string};steps:string[];fixture:boolean};
+export type WorkflowPlan={kind:'workflow'|'job';token:string;operation?:string;confirmation:string;steps:string[];preview?:unknown;expiresAt?:number;job?:DeploymentPlan};
+export type DBLink={id:string;engine:string;port:number;username:string};
+export type Readiness={version:string;productionReady:boolean;checks:{name:string;state:string}[];instructions:string[]};
+type Request={sessionId?:string;projectId?:string;operation?:string;site?:SiteSettings;file?:string;revision?:string;changes?:{key:string;value?:string;remove?:boolean}[];backup?:string;unit?:string;source?:string;target?:string;email?:string;acceptScripts?:boolean;connectionId?:string;database?:string};
+export type WorkflowsAPI={inspect:(q:Request)=>Promise<Result<MaskedEnvironment|SitePreview|{timers:ProjectTimer[];warning:string}|{text:string;message:string}>>;prepare:(q:Request)=>Promise<Result<WorkflowPlan>>;perform:(q:{token:string;confirmationName:string;password?:string})=>Promise<Result<{message?:string}&Partial<MaskedEnvironment>&{versions?:HostingVersion[]}>>;cancel:(q:{token:string})=>Promise<Result<void>>;connections:(q:{sessionId:string})=>Promise<Result<DBLink[]>>;readiness:()=>Promise<Result<Readiness>>};
